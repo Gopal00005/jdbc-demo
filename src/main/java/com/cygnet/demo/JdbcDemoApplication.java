@@ -1,6 +1,8 @@
 package com.cygnet.demo;
 
-import java.util.Arrays;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +30,7 @@ import com.cygnet.demo.exception.CustomSQLErrorCodeTranslator;
 import com.cygnet.demo.jdbc.StudentJDBCTemplate;
 import com.cygnet.demo.mapper.CustomerMapper;
 import com.cygnet.demo.mapper.StudentMapper;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 
 @SpringBootApplication
 public class JdbcDemoApplication implements CommandLineRunner {
@@ -99,5 +102,37 @@ public class JdbcDemoApplication implements CommandLineRunner {
 //		Map<String, Object> out = simpleJdbcCall.execute(in);
 //
 //		System.out.println("First Name:" + out.get("firstname"));
+
+		// Batch Update example.
+
+		List<Customer> customers = new ArrayList<>();
+
+		Customer c1 = new Customer("First", "Customer1");
+		Customer c2 = new Customer("First", "Customer2");
+		Customer c3 = new Customer("First", "Customer3");
+		Customer c4 = new Customer("First", "Customer4");
+		Customer c5 = new Customer("First", "Customer5");
+
+		customers.add(c1);
+		customers.add(c2);
+		customers.add(c3);
+		customers.add(c4);
+		customers.add(c5);
+
+		int[] batchUpdateResult = jdbcTemplate.batchUpdate("INSERT INTO customers VALUES (?, ?, ?)",
+				new BatchPreparedStatementSetter() {
+					@Override
+					public void setValues(PreparedStatement ps, int i) throws SQLException {
+						ps.setInt(1, customers.get(i).getId());
+						ps.setString(2, customers.get(i).getFirstName());
+						ps.setString(3, customers.get(i).getLastName());
+					}
+
+					@Override
+					public int getBatchSize() {
+						return 2;
+					}
+				});
+		log.info("batchUpdateResult:{}", batchUpdateResult);
 	}
 }
